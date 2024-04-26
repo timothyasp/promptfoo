@@ -16,6 +16,7 @@ import { loadApiProvider, loadApiProviders } from './providers';
 import { evaluate, DEFAULT_MAX_CONCURRENCY } from './evaluator';
 import { readPrompts, readProviderPromptMap } from './prompts';
 import { readTest, readTests, synthesize, synthesizeFromTestSuite } from './testCases';
+import { synthesizeFromTestSuite as redteamSynthesizeFromTestSuite } from './redteam';
 import {
   cleanupOldFileResults,
   maybeReadConfig,
@@ -377,6 +378,7 @@ async function main() {
       gatherFeedback(message);
     });
 
+  /*
   program
     .command('generate dataset')
     .description('Generate test cases for a given prompt')
@@ -471,6 +473,79 @@ async function main() {
           numTestsGenerated: results.length,
         });
         await telemetry.send();
+      },
+    );
+    */
+
+  program
+    .command('generate adversarial')
+    .description('Generate adversarial test cases for a given prompt')
+    .option(
+      '-c, --config [path]',
+      'Path to configuration file. Defaults to promptfooconfig.yaml',
+      defaultConfigPath,
+    )
+    .option('-o, --output [path]', 'Path to output file')
+    .option('--no-cache', 'Do not read or write results to disk cache', false)
+    .option('--env-file <path>', 'Path to .env file')
+    .action(
+      async (
+        _,
+        options: {
+          config?: string;
+          output?: string;
+          cache: boolean;
+          envFile?: string;
+        },
+      ) => {
+        setupEnv(options.envFile);
+        if (!options.cache) {
+          logger.info('Cache is disabled.');
+          disableCache();
+        }
+
+        let testSuite: TestSuite;
+        if (options.config) {
+          const resolved = await resolveConfigs(
+            {
+              config: [options.config],
+            },
+            defaultConfig,
+          );
+          testSuite = resolved.testSuite;
+        } else {
+          throw new Error('Could not find config file. Please use `--config`');
+        }
+
+        const results = await redteamSynthesizeFromTestSuite(testSuite, {});
+
+        console.log(yaml.dump(results, { noRefs: true }));
+
+        if (options.output) {
+          fs.writeFileSync(
+            options.output,
+            yaml.dump(
+              {
+                ...testSuite,
+                tests: results,
+              },
+              { noRefs: true },
+            ),
+          );
+          printBorder();
+          logger.info(`Wrote ${results.length} new test cases to ${options.output}`);
+          printBorder();
+        }
+
+        /*
+        telemetry.record('command_used', {
+          name: 'generate_redteam',
+          numPrompts: testSuite.prompts.length,
+          numTestsExisting: (testSuite.tests || []).length,
+          numTestsGenerated: results.length,
+        });
+        await telemetry.send();
+        */
       },
     );
 
