@@ -337,6 +337,7 @@ function ResultsCharts({ columnVisibility }: ResultsChartsProps) {
     // All scores are the same, charts not useful.
     return null;
   }
+  console.log('randering charts')
 
   return (
     <ErrorBoundary fallback={null}>
