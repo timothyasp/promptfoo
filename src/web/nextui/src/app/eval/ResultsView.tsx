@@ -34,6 +34,7 @@ import { useDebounce } from 'use-debounce';
 import DownloadMenu from './DownloadMenu';
 import ResultsCharts from './ResultsCharts';
 import ResultsTable from './ResultsTable';
+import ResultsSuggestions from './ResultsSuggestions';
 import ConfigModal from './ConfigModal';
 import ShareModal from './ShareModal';
 import SettingsModal from './ResultsViewSettingsModal';
@@ -73,8 +74,15 @@ export default function ResultsView({
   const { table, config, setConfig, maxTextLength, wordBreak, showInferenceDetails, evalId } =
     useResultsViewStore();
   const { setStateFromConfig } = useMainStore();
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-  const [selectedColumns, setSelectedColumns] = React.useState<string[]>([]);
+
+  const [metricVisibility, setMetricVisibility] = React.useState<Record<string, boolean>>(() => {
+    return table?.head.prompts
+      .flatMap((prompt) => Object.keys(prompt.metrics?.namedScores || {}))
+      .reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {} as Record<string, boolean>) || {};
+  });
 
   const [searchText, setSearchText] = React.useState('');
   const [debouncedSearchText] = useDebounce(searchText, 1000);
@@ -83,9 +91,9 @@ export default function ResultsView({
   };
 
   const [failureFilter, setFailureFilter] = React.useState<{ [key: string]: boolean }>({});
-  const handleFailureFilterToggle = (columnId: string, checked: boolean) => {
+  const handleFailureFilterToggle = React.useCallback((columnId: string, checked: boolean) => {
     setFailureFilter((prevFailureFilter) => ({ ...prevFailureFilter, [columnId]: checked }));
-  };
+  }, [setFailureFilter]);
 
   const [filterMode, setFilterMode] = React.useState<FilterMode>('all');
   const handleFilterModeChange = (event: SelectChangeEvent<unknown>) => {
@@ -200,29 +208,31 @@ export default function ResultsView({
     }
   };
 
-  const columnData = [
-    ...head.vars.map((_, idx) => ({
-      value: `Variable ${idx + 1}`,
-      label: `Var ${idx + 1}: ${
-        head.vars[idx].length > 100 ? head.vars[idx].slice(0, 97) + '...' : head.vars[idx]
-      }`,
-      group: 'Variables',
-    })),
-    ...head.prompts.map((_, idx) => ({
-      value: `Prompt ${idx + 1}`,
-      label: `Prompt ${idx + 1}: ${
-        head.prompts[idx].display.length > 100
-          ? head.prompts[idx].display.slice(0, 97) + '...'
-          : head.prompts[idx].display
-      }`,
-      group: 'Prompts',
-    })),
-  ];
+  const columnData = React.useMemo(() => {
+    return [
+      ...head.vars.map((_, idx) => ({
+        value: `Variable ${idx + 1}`,
+        label: `Var ${idx + 1}: ${
+          head.vars[idx].length > 100 ? head.vars[idx].slice(0, 97) + '...' : head.vars[idx]
+        }`,
+        group: 'Variables',
+      })),
+      ...head.prompts.map((_, idx) => ({
+        value: `Prompt ${idx + 1}`,
+        label: `Prompt ${idx + 1}: ${
+          head.prompts[idx].display.length > 100
+            ? head.prompts[idx].display.slice(0, 97) + '...'
+            : head.prompts[idx].display
+        }`,
+        group: 'Prompts',
+      })),
+    ];
+  }, [head.vars, head.prompts]);
 
-  // Set all columns as selected by default
-  React.useEffect(() => {
-    setSelectedColumns(columnData.map((col) => col.value));
-  }, [head]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [selectedColumns, setSelectedColumns] = React.useState<string[]>(
+  columnData.map((col) => col.value)
+);
 
   // State for anchor element
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -293,6 +303,36 @@ export default function ResultsView({
                   <MenuItem dense key={column.value} value={column.value}>
                     <Checkbox checked={selectedColumns.indexOf(column.value) > -1} />
                     <ListItemText primary={column.label} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <Box>
+            <FormControl sx={{ m: 1, minWidth: 200, maxWidth: 350 }} size="small">
+              <InputLabel id="metrics-visibility-label">Metrics</InputLabel>
+              <Select
+                labelId="metrics-visibility-label"
+                id="metrics-visibility"
+                multiple
+                value={Object.keys(metricVisibility).filter((key) => metricVisibility[key])}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setMetricVisibility((prev) => {
+                    const newState = { ...prev };
+                    Object.keys(newState).forEach((key) => {
+                      newState[key] = value.includes(key);
+                    });
+                    return newState;
+                  });
+                }}
+                input={<OutlinedInput label="Metrics Visibility" />}
+                renderValue={(selected: string[]) => selected.join(', ')}
+              >
+                {Object.keys(metricVisibility).map((metric) => (
+                  <MenuItem key={metric} value={metric}>
+                    <Checkbox checked={metricVisibility[metric]} />
+                    <ListItemText primary={metric} />
                   </MenuItem>
                 ))}
               </Select>
@@ -397,6 +437,7 @@ export default function ResultsView({
           </Box>
         </ResponsiveStack>
       </Paper>
+      <ResultsSuggestions />
       <ResultsCharts columnVisibility={columnVisibility} />
       <ResultsTable
         maxTextLength={maxTextLength}
