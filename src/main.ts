@@ -519,7 +519,7 @@ async function main() {
 
         const results = await redteamSynthesizeFromTestSuite(testSuite, {});
 
-        console.log(yaml.dump(results, { noRefs: true }));
+        console.log(yaml.dump(results, { noRefs: true, skipInvalid: true }));
 
         if (options.output) {
           fs.writeFileSync(
@@ -529,7 +529,7 @@ async function main() {
                 ...testSuite,
                 tests: results,
               },
-              { noRefs: true },
+              { noRefs: true, skipInvalid: true },
             ),
           );
           printBorder();
