@@ -176,7 +176,7 @@ async function runRedteamConvo(
     console.log(
       '*********************************************************************************',
     );
-    const resp1 = history.length === 0 ? {output:await getEuphemism(goal)} : await redteamProvider.callApi(body1);
+    const resp1 = history.length === 0 ? {output:await getEuphemism(String(goal))} : await redteamProvider.callApi(body1);
     invariant(typeof resp1.output === 'string', 'Expected output to be a string');
     const attempt = resp1.output.trim();
     console.log('ATTEMPT:', attempt);

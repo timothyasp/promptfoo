@@ -518,19 +518,19 @@ async function main() {
         }
 
         const results = await redteamSynthesizeFromTestSuite(testSuite, {});
+        console.log(results);
 
-        console.log(yaml.dump(results, { noRefs: true, skipInvalid: true }));
+        console.log(yaml.dump(results, { skipInvalid: true }));
 
         if (options.output) {
+          const existingYaml = yaml.load(fs.readFileSync(options.config, 'utf8')) as object;
+          const updatedYaml = {
+            ...existingYaml,
+            tests: results,
+          };
           fs.writeFileSync(
             options.output,
-            yaml.dump(
-              {
-                ...testSuite,
-                tests: results,
-              },
-              { noRefs: true, skipInvalid: true },
-            ),
+            yaml.dump(updatedYaml, { skipInvalid: true }),
           );
           printBorder();
           logger.info(`Wrote ${results.length} new test cases to ${options.output}`);
