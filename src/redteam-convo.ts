@@ -59,7 +59,6 @@ class RedteamConvoProvider implements ApiProvider {
   async callApi(prompt: string, context?: CallApiContextParams, options?: CallApiOptionsParams) {
     invariant(options?.originalProvider, 'Expected originalProvider to be set');
     invariant(context?.vars, 'Expected vars to be set');
-    console.log('prompt', prompt);
     return runRedteamConvo(prompt, context.vars, options?.originalProvider);
   }
 }
