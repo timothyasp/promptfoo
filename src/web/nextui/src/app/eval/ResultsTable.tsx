@@ -365,11 +365,12 @@ function EvalOutputCell({
     );
   }
 
-  const comment = output.gradingResult?.comment ? (
-    <div className="comment" onClick={handleCommentOpen}>
-      {output.gradingResult.comment}
-    </div>
-  ) : null;
+  const comment =
+    output.gradingResult?.comment && output.gradingResult.comment !== '!highlight' ? (
+      <div className="comment" onClick={handleCommentOpen}>
+        {output.gradingResult.comment}
+      </div>
+    ) : null;
 
   const detail = showStats ? (
     <div className="cell-detail">
@@ -439,8 +440,12 @@ function EvalOutputCell({
   );
 
   // TODO(ian): output.prompt check for backwards compatibility, remove after 0.17.0
+  const cellStyle: Record<string, string> = {};
+  if (output.gradingResult?.comment === '!highlight') {
+    cellStyle.backgroundColor = '#ffffeb';
+  }
   return (
-    <div className="cell">
+    <div className="cell" style={cellStyle}>
       {output.pass ? (
         <>
           <div className="status pass">
@@ -822,9 +827,7 @@ function ResultsTable({
               return (
                 <div className="output-header">
                   <div className="pills">
-                    {prompt.provider ? (
-                      <div className="provider">{providerDisplay}</div>
-                    ) : null}
+                    {prompt.provider ? <div className="provider">{providerDisplay}</div> : null}
                     <div className="summary">
                       <div className={`highlight ${isHighestPassing ? 'success' : ''}`}>
                         <strong>{pct}% passing</strong> ({numGoodTests[idx]}/{body.length} cases)
