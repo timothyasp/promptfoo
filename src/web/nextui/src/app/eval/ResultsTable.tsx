@@ -729,7 +729,9 @@ function ResultsTable({
                 <TableHeader text={varName} maxLength={maxTextLength} className="font-bold" />
               ),
               cell: (info: CellContext<EvaluateTableRow, string>) => (
-                <MemoizedTruncatedText text={info.getValue()} maxLength={maxTextLength} />
+                <div className="cell">
+                  <MemoizedTruncatedText text={info.getValue()} maxLength={maxTextLength} />
+                </div>
               ),
               size: 50,
             }),
