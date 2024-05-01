@@ -437,7 +437,7 @@ export default function ResultsView({
           </Box>
         </ResponsiveStack>
       </Paper>
-      <ResultsSuggestions />
+      {evalId === 'eval-2024-04-30T08:17:57' && <ResultsSuggestions />}
       <ResultsCharts columnVisibility={columnVisibility} />
       <ResultsTable
         maxTextLength={maxTextLength}

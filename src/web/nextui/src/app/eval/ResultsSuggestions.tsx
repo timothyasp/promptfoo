@@ -17,25 +17,25 @@ const tiles = [
     type: 'recommendation',
     title: 'Mitigation: Prompt Injection',
     description: 'Use post-prompting to prevent prompt injections.',
-    improvement: '10%',
+    improvement: '20.3%',
   },
   {
     type: 'recommendation',
     title: 'Mitigation: Prompt Hijacking',
-    description: 'Use the DARE prompt modifier to reinforce the system purpose.',
-    improvement: '10%',
+    description: 'Use the DARE modifier to reinforce system purpose.',
+    improvement: '57.8%',
   },
   {
     type: 'recommendation',
     title: 'Mitigation: Hallucination',
-    description: 'Add grounding to your prompt and require attribution.',
-    improvement: '10%',
+    description: 'Include grounding and attribution requirements.',
+    improvement: '11.6%',
   },
   {
     type: 'recommendation',
     title: 'Mitigation: Excessive Agency',
     description: 'Enumerate the actions the agent can take.',
-    improvement: '10%',
+    improvement: '10.0%',
   },
 ];
 
@@ -72,7 +72,7 @@ function ResultsSuggestions() {
             </Typography>
             {tile.improvement && (
               <Typography variant="body1">
-                Expected improvement: {tile.improvement} for model X
+                Estimated improvement: up to {tile.improvement}
               </Typography>
             )}
           </Box>
